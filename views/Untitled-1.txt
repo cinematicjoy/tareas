@@ -1,0 +1,161 @@
+app.js
+
+"use strict"
+//console.log("hola")
+
+//declarar los paquetes con los que vamos a trabajar
+const express = require('express')
+const mongoose = require('mongoose')
+const path = require('path')
+const indexRoutes = require('./routes/index')
+
+// Inicializa el servidor
+const app = express()
+
+//conectamos a la base de datos
+mongoose.connect('mongodb+srv://adrgon:9cZzWCbYNpiCKoZF@cluster0-fimlp.mongodb.net/miscosas', { useNewUrlParser: true })
+        .then(db => console.log("Base de datos conectada"))
+        .catch(err => console.log(err))
+
+
+// Cofigurar especificaciones del servidor   
+app.set('port', process.env.PORT || 3000)
+app.set('views', path.join(__dirname, 'views'))
+app.set('view engine', 'ejs')
+
+// permite posiciones post
+app.use(express.urlencoded({extended: false}))
+
+
+
+
+// Proporciona una ruta de inicio al servidor
+app.use('/', indexRoutes)
+
+//Arrancamos el servidor http / express
+app.listen(app.get('port'), function(){
+    console.log(`El servidor en puerto ${app.get('port')}`)
+
+})
+
+
+model/task
+"use strict"
+const mongoose = require('mongoose')
+
+const Schema = mongoose.Schema
+
+const TaskSchema = Schema({
+    title: String,
+    description: String,
+    status: {
+        type:Boolean, 
+        default: false
+    }
+})
+
+module.exports = mongoose.model('tasks', TaskSchema);
+
+route/index
+
+"use strict"
+const express = require('express')
+const router = express.Router()
+
+const Task = require('../models/task')
+
+
+router.get('/', async(req, res) => {
+    const tasks = await Task.find();
+    res.render('index', {
+        tasks
+    })
+})
+
+router.post('/add', async (req, res)=>{
+    const task = new Task(req.body)
+    await task.save();
+    res.redirect('/')
+})
+
+module.exports = router
+
+views/index.ejs
+"use strict"
+const express = require('express')
+const router = express.Router()
+
+const Task = require('../models/task')
+
+
+router.get('/', async(req, res) => {
+    const tasks = await Task.find();
+    res.render('index', {
+        tasks
+    })
+})
+
+router.post('/add', async (req, res)=>{
+    const task = new Task(req.body)
+    await task.save();
+    res.redirect('/')
+})
+
+
+
+
+module.exports = router
+
+
+
+
+<% include partials/_header.ejs %>
+<div class="container">
+    <div class="row">
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-body">
+                    <form action="/add" method="POST">
+                        <div class="form-group">
+                            <input name="title" type="text" class="form-control">
+                        </div>
+                        <div class="form-group">
+                                <textarea name="description"  class="form-control"></textarea>
+                        </div>
+                        <button class="btn btn-primary" type="submit">Agregar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <table class="table-border table-hover">
+                <thead>
+                    <tr>
+                        <th>Nro</th>
+                        <th>Titulo</th>
+                        <th>Descripcion</th>
+                        <th>Operaciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% for(var i=0; i<tasks.length; i++){ %>
+                        <tr>
+                            <td><%= i + 1 %></td>
+                            <td><%= tasks[i].title %></td>
+                            <td><%= tasks[i].description %></td>
+                            <td>
+                                <a href="" class="btn btn-success">Listo</a>
+                                <a href="" class="btn btn-danger">Borrar</a>
+                                <a href="" class="btn btn-info">Editar</a>
+
+                            </td>
+                        </tr>
+                        <% } %> 
+                    </tbody>                
+            </table>
+        </div>
+
+    </div>
+</div>
+<% include partials/_footer.ejs %>
